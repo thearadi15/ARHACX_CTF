@@ -194,7 +194,7 @@ jobs:
           cd "${{ matrix.challenge }}/${{ steps.config.outputs.deploy_dir }}"
           # Install tooling without modifying package.json/package-lock.json
           # and avoid CI failures due to peer dependency constraints.
-          npm install --no-save --legacy-peer-deps @cloudflare/next-on-pages wrangler
+          npm install --no-save --legacy-peer-deps @cloudflare/next-on-pages wrangler esbuild
 
       - name: Build application
         run: |
