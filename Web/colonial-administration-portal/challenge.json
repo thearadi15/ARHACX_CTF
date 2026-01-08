@@ -1,0 +1,41 @@
+{
+  "name": "Colonial Administration Portal",
+  "category": "Web",
+  "description": "You've discovered an old British colonial administration system from 1947. The portal contains classified documents about India's independence movement. Your mission is to bypass the authentication system and retrieve the classified constitution draft that only administrators can access.\n\nThe system uses JWT-based authentication with role-based access control. Can you elevate your privileges and access the restricted documents?\n\n**Learning Focus:** JWT vulnerabilities, authorization bypass, IDOR\n\n**Deployment:** Live web application (URL provided during CTF)\n\n**Test credentials are displayed on the login page**",
+  "value": 400,
+  "type": "standard",
+  "state": "visible",
+  "max_attempts": 0,
+  "flags": [
+    {
+      "content": "CTF{C0L0N14L_CH41N5_BR0K3N_FR33D0M_4CH13V3D_1947}",
+      "type": "static"
+    }
+  ],
+  "tags": [
+    "jwt",
+    "authentication",
+    "authorization",
+    "web",
+    "api-security",
+    "next.js",
+    "medium"
+  ],
+  "files": [],
+  "hints": [
+    {
+      "content": "JWT tokens have three parts: header, payload, and signature. Not all algorithms require verification...",
+      "cost": 50
+    },
+    {
+      "content": "The year of India's independence (1947) might be significant in the application...",
+      "cost": 100
+    },
+    {
+      "content": "Check if the middleware has any logic flaws in role verification. Sometimes OR conditions can be exploited.",
+      "cost": 150
+    }
+  ],
+  "requirements": [],
+  "next_id": null
+}
