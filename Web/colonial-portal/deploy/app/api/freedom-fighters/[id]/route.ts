@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getFreedomFighterById } from '@/lib/db';
 
+export const runtime = 'edge';
+
 // VULNERABILITY 4: IDOR - Insecure Direct Object Reference
 export async function GET(
   request: NextRequest,

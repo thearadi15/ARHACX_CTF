@@ -4,6 +4,8 @@ import { getUserByUsername } from '@/lib/db';
 import { generateToken } from '@/lib/jwt';
 import { serialize } from 'cookie';
 
+export const runtime = 'edge';
+
 export async function POST(request: NextRequest) {
   try {
     const { username, password } = await request.json();
@@ -34,7 +36,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Generate JWT token
-    const token = generateToken({
+    const token = await generateToken({
       userId: user.id,
       username: user.username,
       role: user.role,

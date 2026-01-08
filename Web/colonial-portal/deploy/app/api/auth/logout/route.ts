@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { serialize } from 'cookie';
 
+export const runtime = 'edge';
+
 export async function POST(request: NextRequest) {
   const cookie = serialize('auth_token', '', {
     httpOnly: true,
