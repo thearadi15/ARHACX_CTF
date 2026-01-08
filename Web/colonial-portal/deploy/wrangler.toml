@@ -1,0 +1,24 @@
+# Wrangler configuration for Next.js on Cloudflare Pages
+# This file is auto-generated during deployment
+
+name = "colonial-portal"
+compatibility_date = "2024-01-01"
+compatibility_flags = ["nodejs_compat"]
+
+# Pages configuration
+pages_build_output_dir = ".vercel/output/static"
+
+# Bindings (add as needed)
+# [vars]
+# MY_VAR = "value"
+
+# [kv_namespaces]
+# [[kv_namespaces]]
+# binding = "MY_KV"
+# id = "xxx"
+
+# [d1_databases]
+# [[d1_databases]]
+# binding = "DB"
+# database_name = "my-database"
+# database_id = "xxx"

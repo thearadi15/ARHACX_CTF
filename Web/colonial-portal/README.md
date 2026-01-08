@@ -25,6 +25,11 @@ The system uses JWT-based authentication with role-based access control. Can you
 - Authorization bypass techniques
 - IDOR (Insecure Direct Object Reference)
 
+## Deployment Status
+- **Live URL:** _Pending deployment_
+- **Last Deployed:** _Not yet deployed_
+- **Platform:** Cloudflare Pages
+
 ## Notes
 - No brute force required
 - Flag format: `CTF{...}`

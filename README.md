@@ -109,6 +109,52 @@ Clear description of the objective without spoilers.
 
 ---
 
+## Automatic Deployment (Cloudflare)
+
+Challenges that require web hosting are **automatically deployed** to Cloudflare when you add a `deploy.config.json` file.
+
+### Quick Setup
+
+1. Create `deploy.config.json` in your challenge folder:
+
+```json
+{
+  "$schema": "../../.github/deploy.schema.json",
+  "name": "My Challenge",
+  "enabled": true,
+  "type": "pages",
+  "framework": "nextjs",
+  "deploy_directory": "deploy",
+  "build_command": "npm run build"
+}
+```
+
+2. Push to `main` branch - deployment happens automatically!
+
+### Updated Challenge Structure
+
+```
+Category/
+└── challenge-name/
+    ├── README.md           # Auto-updated with deployment URL
+    ├── challenge.json
+    ├── deploy.config.json  # Triggers deployment
+    ├── attachments/
+    ├── deploy/
+    └── solution/
+```
+
+### Key Points
+
+* **Trigger:** Only pushes that modify `deploy.config.json` trigger deployment
+* **Selective:** Only changed challenges are deployed (saves resources)
+* **Auto-URL:** README is automatically updated with the live URL
+* **Platform:** Cloudflare Pages (static/Next.js) or Workers (APIs)
+
+**Full documentation:** [.github/DEPLOYMENT.md](.github/DEPLOYMENT.md)
+
+---
+
 ## Flag Rules
 
 * Flag format:
