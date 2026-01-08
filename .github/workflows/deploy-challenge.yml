@@ -192,7 +192,9 @@ jobs:
         if: steps.config.outputs.framework == 'nextjs'
         run: |
           cd "${{ matrix.challenge }}/${{ steps.config.outputs.deploy_dir }}"
-          npm install @cloudflare/next-on-pages wrangler --save-dev
+          # Install tooling without modifying package.json/package-lock.json
+          # and avoid CI failures due to peer dependency constraints.
+          npm install --no-save --legacy-peer-deps @cloudflare/next-on-pages wrangler
 
       - name: Build application
         run: |
