@@ -14,5 +14,6 @@
     "JWT_SECRET": "colonial1947"
   },
   "node_version": "20",
-  "compatibility_date": "2026-01-01"
+  "compatibility_date": "2026-01-01",
+  "deploy_trigger": 2
 }
