@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions name="WarArchiveService"
+  targetNamespace="http://defense.gov.in/war"
+  xmlns:tns="http://defense.gov.in/war"
+  xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
+  xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+  xmlns="http://schemas.xmlsoap.org/wsdl/">
+
+  <types>
+    <xsd:schema targetNamespace="http://defense.gov.in/war">
+
+      <xsd:element name="getWarSummary">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element name="year" type="xsd:int" minOccurs="0"/>
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+
+      <xsd:element name="listOperations">
+        <xsd:complexType/>
+      </xsd:element>
+
+      <xsd:element name="getHiddenArchive">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element name="authHash" type="xsd:string" minOccurs="0"/>
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+
+    </xsd:schema>
+  </types>
+
+  <portType name="WarArchivePortType">
+    <operation name="getWarSummary"/>
+    <operation name="listOperations"/>
+    <operation name="getHiddenArchive"/>
+  </portType>
+
+  <binding name="WarArchiveBinding" type="tns:WarArchivePortType">
+    <soap:binding style="document" transport="http://schemas.xmlsoap.org/soap/http"/>
+  </binding>
+
+  <service name="WarArchiveService">
+    <port name="WarArchivePort" binding="tns:WarArchiveBinding">
+      <soap:address location="http://127.0.0.1/SOAP-API/public/services/WarArchiveService.php"/>
+    </port>
+  </service>
+
+</definitions>
