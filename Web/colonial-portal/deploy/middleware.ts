@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { verifyToken } from './lib/jwt';
 
-export function middleware(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // Public routes
@@ -22,7 +22,7 @@ export function middleware(request: NextRequest) {
   }
 
   // Verify token
-  const payload = verifyToken(token);
+  const payload = await verifyToken(token);
   
   if (!payload) {
     return NextResponse.json({ error: 'Invalid token' }, { status: 401 });

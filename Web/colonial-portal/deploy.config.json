@@ -1,0 +1,19 @@
+{
+  "$schema": "../.github/deploy.schema.json",
+  "name": "Colonial Portal",
+  "enabled": true,
+  "type": "pages",
+  "framework": "nextjs",
+  "deploy_directory": "deploy",
+  "install_command": "npm ci",
+  "build_command": "npm run build",
+  "output_directory": ".vercel/output/static",
+  "subdomain": "colonial-portal",
+  "env": {
+    "NODE_ENV": "production",
+    "JWT_SECRET": "colonial1947"
+  },
+  "node_version": "20",
+  "compatibility_date": "2026-01-01",
+  "deploy_trigger": 4
+}

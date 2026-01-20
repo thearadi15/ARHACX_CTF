@@ -1,0 +1,332 @@
+# CTF Challenge Deployment Pipeline
+# Deploys challenges to Cloudflare Pages/Workers when deploy.config.json is modified
+#
+# TRIGGER: Push with changes to any deploy.config.json file
+# Or manually trigger with workflow_dispatch
+#
+# Required Secrets:
+#   - CLOUDFLARE_API_TOKEN: Cloudflare API token with Workers/Pages edit permissions
+#   - CLOUDFLARE_ACCOUNT_ID: Your Cloudflare account ID
+#
+# Optional Secrets:
+#   - GH_PAT: GitHub Personal Access Token for pushing README updates
+
+name: Deploy CTF Challenge
+
+on:
+  push:
+    paths:
+      - '**/deploy.config.json'
+    branches:
+      - main
+      - master
+  workflow_dispatch:
+    inputs:
+      challenge_path:
+        description: 'Path to challenge folder (e.g., Web/colonial-portal)'
+        required: false
+        type: string
+      force_deploy:
+        description: 'Force deploy even if no changes detected'
+        required: false
+        type: boolean
+        default: false
+
+env:
+  NODE_VERSION: '20'
+
+jobs:
+  detect-changes:
+    name: Detect Changed Challenges
+    runs-on: ubuntu-latest
+    outputs:
+      challenges: ${{ steps.detect.outputs.challenges }}
+      has_challenges: ${{ steps.detect.outputs.has_challenges }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Detect changed deploy configs
+        id: detect
+        run: |
+          # If manual trigger with specific path
+          if [ -n "${{ github.event.inputs.challenge_path }}" ]; then
+            CHALLENGE_PATH="${{ github.event.inputs.challenge_path }}"
+            if [ -f "$CHALLENGE_PATH/deploy.config.json" ]; then
+              echo "challenges=[\"$CHALLENGE_PATH\"]" >> $GITHUB_OUTPUT
+              echo "has_challenges=true" >> $GITHUB_OUTPUT
+              echo "Manual deploy for: $CHALLENGE_PATH"
+            else
+              echo "ERROR: No deploy.config.json found in $CHALLENGE_PATH"
+              echo "challenges=[]" >> $GITHUB_OUTPUT
+              echo "has_challenges=false" >> $GITHUB_OUTPUT
+            fi
+            exit 0
+          fi
+
+          # Auto-detect changed deploy.config.json files
+          CHANGED_FILES=$(git diff --name-only HEAD~1 HEAD 2>/dev/null || git diff --name-only HEAD)
+          
+          CHALLENGES=()
+          while IFS= read -r file; do
+            if [[ "$file" == */deploy.config.json ]]; then
+              CHALLENGE_DIR=$(dirname "$file")
+              # Verify the config exists and is valid
+              if [ -f "$CHALLENGE_DIR/deploy.config.json" ]; then
+                CHALLENGES+=("$CHALLENGE_DIR")
+                echo "Found challenge to deploy: $CHALLENGE_DIR"
+              fi
+            fi
+          done <<< "$CHANGED_FILES"
+
+          # Convert to JSON array
+          if [ ${#CHALLENGES[@]} -eq 0 ]; then
+            echo "challenges=[]" >> $GITHUB_OUTPUT
+            echo "has_challenges=false" >> $GITHUB_OUTPUT
+            echo "No challenges to deploy"
+          else
+            JSON_ARRAY=$(printf '%s\n' "${CHALLENGES[@]}" | jq -R . | jq -s -c .)
+            echo "challenges=$JSON_ARRAY" >> $GITHUB_OUTPUT
+            echo "has_challenges=true" >> $GITHUB_OUTPUT
+          fi
+
+  deploy:
+    name: Deploy ${{ matrix.challenge }}
+    needs: detect-changes
+    if: needs.detect-changes.outputs.has_challenges == 'true'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        challenge: ${{ fromJson(needs.detect-changes.outputs.challenges) }}
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: '${{ matrix.challenge }}/deploy/package-lock.json'
+
+      - name: Read deploy config
+        id: config
+        run: |
+          CONFIG_FILE="${{ matrix.challenge }}/deploy.config.json"
+          
+          if [ ! -f "$CONFIG_FILE" ]; then
+            echo "ERROR: deploy.config.json not found!"
+            exit 1
+          fi
+
+          # Parse configuration
+          echo "Reading configuration from $CONFIG_FILE"
+          
+          # Extract values using jq
+          NAME=$(jq -r '.name // empty' "$CONFIG_FILE")
+          TYPE=$(jq -r '.type // "pages"' "$CONFIG_FILE")
+          DEPLOY_DIR=$(jq -r '.deploy_directory // "deploy"' "$CONFIG_FILE")
+          BUILD_CMD=$(jq -r '.build_command // "npm run build"' "$CONFIG_FILE")
+          INSTALL_CMD=$(jq -r '.install_command // "npm ci"' "$CONFIG_FILE")
+          OUTPUT_DIR=$(jq -r '.output_directory // ".next"' "$CONFIG_FILE")
+          DOMAIN=$(jq -r '.domain // empty' "$CONFIG_FILE")
+          SUBDOMAIN=$(jq -r '.subdomain // empty' "$CONFIG_FILE")
+          FRAMEWORK=$(jq -r '.framework // "nextjs"' "$CONFIG_FILE")
+          COMPATIBILITY_DATE=$(jq -r '.compatibility_date // "2024-01-01"' "$CONFIG_FILE")
+          
+          # Use challenge folder name if name not specified
+          if [ -z "$NAME" ]; then
+            NAME=$(basename "${{ matrix.challenge }}")
+          fi
+          
+          # Sanitize name for Cloudflare (lowercase, alphanumeric, hyphens only)
+          WORKER_NAME=$(echo "$NAME" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9-]/-/g' | sed 's/--*/-/g' | sed 's/^-//' | sed 's/-$//')
+          
+          echo "name=$NAME" >> $GITHUB_OUTPUT
+          echo "worker_name=$WORKER_NAME" >> $GITHUB_OUTPUT
+          echo "type=$TYPE" >> $GITHUB_OUTPUT
+          echo "deploy_dir=$DEPLOY_DIR" >> $GITHUB_OUTPUT
+          echo "build_cmd=$BUILD_CMD" >> $GITHUB_OUTPUT
+          echo "install_cmd=$INSTALL_CMD" >> $GITHUB_OUTPUT
+          echo "output_dir=$OUTPUT_DIR" >> $GITHUB_OUTPUT
+          echo "domain=$DOMAIN" >> $GITHUB_OUTPUT
+          echo "subdomain=$SUBDOMAIN" >> $GITHUB_OUTPUT
+          echo "framework=$FRAMEWORK" >> $GITHUB_OUTPUT
+          echo "compatibility_date=$COMPATIBILITY_DATE" >> $GITHUB_OUTPUT
+          
+          # Extract environment variables
+          ENV_VARS=$(jq -r '.env // {} | to_entries | map("\(.key)=\(.value)") | .[]' "$CONFIG_FILE")
+          echo "env_vars<<EOF" >> $GITHUB_OUTPUT
+          echo "$ENV_VARS" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+          
+          echo "Configuration loaded:"
+          echo "   Name: $NAME"
+          echo "   Worker Name: $WORKER_NAME"
+          echo "   Type: $TYPE"
+          echo "   Framework: $FRAMEWORK"
+          echo "   Deploy Dir: $DEPLOY_DIR"
+          echo "   Domain: $DOMAIN"
+          echo "   Subdomain: $SUBDOMAIN"
+
+      - name: Setup environment variables
+        run: |
+          cd "${{ matrix.challenge }}/${{ steps.config.outputs.deploy_dir }}"
+          
+          # Create .env file from config
+          if [ -n "${{ steps.config.outputs.env_vars }}" ]; then
+            echo "${{ steps.config.outputs.env_vars }}" > .env
+            echo "Environment variables configured"
+          fi
+
+      - name: Install dependencies
+        run: |
+          cd "${{ matrix.challenge }}/${{ steps.config.outputs.deploy_dir }}"
+          ${{ steps.config.outputs.install_cmd }}
+
+      - name: Install Cloudflare adapter (Next.js)
+        if: steps.config.outputs.framework == 'nextjs'
+        run: |
+          cd "${{ matrix.challenge }}/${{ steps.config.outputs.deploy_dir }}"
+          # Install tooling without modifying package.json/package-lock.json
+          # and avoid CI failures due to peer dependency constraints.
+          npm install --no-save --legacy-peer-deps @cloudflare/next-on-pages wrangler esbuild
+
+      - name: Build application
+        run: |
+          cd "${{ matrix.challenge }}/${{ steps.config.outputs.deploy_dir }}"
+          ${{ steps.config.outputs.build_cmd }}
+
+      - name: Build for Cloudflare Pages (Next.js)
+        if: steps.config.outputs.framework == 'nextjs' && steps.config.outputs.type == 'pages'
+        run: |
+          cd "${{ matrix.challenge }}/${{ steps.config.outputs.deploy_dir }}"
+          npx @cloudflare/next-on-pages
+
+      - name: Deploy to Cloudflare Pages
+        if: steps.config.outputs.type == 'pages'
+        id: deploy_pages
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: '${{ matrix.challenge }}/${{ steps.config.outputs.deploy_dir }}'
+          command: pages deploy .vercel/output/static --project-name=${{ steps.config.outputs.worker_name }} --commit-dirty=true
+        continue-on-error: true
+
+      - name: Deploy to Cloudflare Pages (fallback for static/other frameworks)
+        if: steps.config.outputs.type == 'pages' && steps.deploy_pages.outcome == 'failure'
+        id: deploy_pages_fallback
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: '${{ matrix.challenge }}/${{ steps.config.outputs.deploy_dir }}'
+          command: pages deploy ${{ steps.config.outputs.output_dir }} --project-name=${{ steps.config.outputs.worker_name }} --commit-dirty=true
+
+      - name: Deploy to Cloudflare Workers
+        if: steps.config.outputs.type == 'worker'
+        id: deploy_worker
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: '${{ matrix.challenge }}/${{ steps.config.outputs.deploy_dir }}'
+          command: deploy --name ${{ steps.config.outputs.worker_name }} --compatibility-date ${{ steps.config.outputs.compatibility_date }}
+
+      - name: Get deployment URL
+        id: url
+        run: |
+          WORKER_NAME="${{ steps.config.outputs.worker_name }}"
+          TYPE="${{ steps.config.outputs.type }}"
+          DOMAIN="${{ steps.config.outputs.domain }}"
+          SUBDOMAIN="${{ steps.config.outputs.subdomain }}"
+          
+          if [ -n "$DOMAIN" ]; then
+            if [ -n "$SUBDOMAIN" ]; then
+              DEPLOY_URL="https://${SUBDOMAIN}.${DOMAIN}"
+            else
+              DEPLOY_URL="https://${DOMAIN}"
+            fi
+          else
+            # Default Cloudflare URLs
+            if [ "$TYPE" = "pages" ]; then
+              DEPLOY_URL="https://${WORKER_NAME}.pages.dev"
+            else
+              DEPLOY_URL="https://${WORKER_NAME}.workers.dev"
+            fi
+          fi
+          
+          echo "url=$DEPLOY_URL" >> $GITHUB_OUTPUT
+          echo "Deployment URL: $DEPLOY_URL"
+
+      - name: Update README with deployment URL
+        run: |
+          README_FILE="${{ matrix.challenge }}/README.md"
+          DEPLOY_URL="${{ steps.url.outputs.url }}"
+          TIMESTAMP=$(date -u +"%Y-%m-%d %H:%M:%S UTC")
+          
+          if [ ! -f "$README_FILE" ]; then
+            echo "WARNING: README.md not found, skipping update"
+            exit 0
+          fi
+          
+          # Check if deployment section exists
+          if grep -q "## Deployment Status" "$README_FILE"; then
+            # Update existing deployment section
+            sed -i "/## Deployment Status/,/^## /{
+              /\*\*Live URL:\*\*/c\- **Live URL:** [$DEPLOY_URL]($DEPLOY_URL)
+              /\*\*Last Deployed:\*\*/c\- **Last Deployed:** $TIMESTAMP
+            }" "$README_FILE"
+          else
+            # Add deployment section before Notes or at end
+            DEPLOY_SECTION="\n## Deployment Status\n- **Live URL:** [$DEPLOY_URL]($DEPLOY_URL)\n- **Last Deployed:** $TIMESTAMP\n- **Platform:** Cloudflare\n"
+            
+            if grep -q "## Notes" "$README_FILE"; then
+              sed -i "/## Notes/i\\${DEPLOY_SECTION}" "$README_FILE"
+            else
+              echo -e "$DEPLOY_SECTION" >> "$README_FILE"
+            fi
+          fi
+          
+          echo "README updated with deployment URL"
+
+      - name: Commit README changes
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "Update deployment URL for ${{ steps.config.outputs.name }}"
+          file_pattern: '${{ matrix.challenge }}/README.md'
+          commit_author: 'GitHub Actions <actions@github.com>'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_PAT || secrets.GITHUB_TOKEN }}
+
+      - name: Deployment Summary
+        run: |
+          echo "## Deployment Complete" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Property | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|----------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Challenge | ${{ steps.config.outputs.name }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Type | ${{ steps.config.outputs.type }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| URL | ${{ steps.url.outputs.url }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Framework | ${{ steps.config.outputs.framework }} |" >> $GITHUB_STEP_SUMMARY
+
+  notify-no-deploy:
+    name: No Deployments
+    needs: detect-changes
+    if: needs.detect-changes.outputs.has_challenges != 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Summary
+        run: |
+          echo "## No Challenges to Deploy" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "No deploy.config.json files were modified in this push." >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "To deploy a challenge:" >> $GITHUB_STEP_SUMMARY
+          echo "1. Create a \`deploy.config.json\` in your challenge folder" >> $GITHUB_STEP_SUMMARY
+          echo "2. Push changes to trigger deployment" >> $GITHUB_STEP_SUMMARY
