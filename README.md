@@ -104,7 +104,7 @@ Clear description of the objective without spoilers.
 
 ## Notes
 - No brute force required
-- Flag format: flag{...}
+- Flag format: RCS_CTF{lowercase_alphanumeric_and_underscores}
 ```
 
 ---
@@ -160,7 +160,7 @@ Category/
 * Flag format:
 
   ```
-  flag{lowercase_alphanumeric_and_underscores}
+  RCS_CTF{lowercase_alphanumeric_and_underscores}
   ```
 
 ---
