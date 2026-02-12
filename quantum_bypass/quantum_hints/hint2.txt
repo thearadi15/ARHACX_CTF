@@ -1,0 +1,1 @@
+Hint 2: The User-Agent header should be set to quantum_browser_2026.

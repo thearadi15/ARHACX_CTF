@@ -1,0 +1,6 @@
+Title: Quantum Bypass CTF Web Challenge
+
+Description:
+Quantum Bypass is not what it seems. Behind its ordinary facade lie intricate traps, misleading paths, and cryptic barriers. Authentication is only the beginning—true progress demands unraveling subtle inconsistencies, decoding hidden signals, and exploiting the unexpected. Trust nothing at face value; every element may be a riddle, every success a misdirection. Only those who question everything and persist through deception will reach the flag. Will you see through the quantum veil?
+Employee ID: EMP2026001
+Password: quantum2026

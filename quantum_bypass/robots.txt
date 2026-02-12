@@ -1,0 +1,8 @@
+User-agent: *
+# Quantum Hint: Try timestamp=2026XXXXXXXXXX (10 digits after 2026)
+Disallow: /admin/quantum_auth.php
+Allow: /quantum_hints/
+
+# SecureCorp Security Portal 2026
+# Quantum security measures enabled
+# All unauthorized access logged

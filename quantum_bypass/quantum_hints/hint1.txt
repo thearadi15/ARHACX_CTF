@@ -1,0 +1,1 @@
+Hint 1: The temporal_sig parameter must be a 64-character hexadecimal string.

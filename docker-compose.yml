@@ -1,0 +1,13 @@
+version: '3.8'
+services:
+  quantum_bypass:
+    build: .
+    container_name: quantum_bypass_ctf
+    ports:
+      - "8000:80"
+    volumes:
+      - ./quantum_bypass:/var/www/html
+    restart: unless-stopped
+    environment:
+      - APACHE_RUN_USER=www-data
+      - APACHE_RUN_GROUP=www-data

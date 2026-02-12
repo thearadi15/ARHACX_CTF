@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quantum Security Corporation</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #f0f2f5;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #2c3e50;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 10px;
+        }
+        .nav-links {
+            display: flex;
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .nav-links a {
+            padding: 10px 20px;
+            background: #3498db;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+        }
+        .hint {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 15px;
+            margin: 20px 0;
+            font-size: 0.9em;
+        }
+        .footer {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #ddd;
+            font-size: 0.8em;
+            color: #7f8c8d;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔐 Quantum Security Corporation</h1>
+        <p>Welcome to our security testing environment. This is a controlled CTF challenge platform.</p>
+        
+        <div class="nav-links">
+            <a href="login.php">Employee Portal</a>
+            <a href="dashboard.php">Dashboard</a>
+            <a href="documentation.pdf">Documentation</a>
+        </div>
+        
+        <div class="hint">
+            <strong>💡 For Security Researchers:</strong>
+            <p>Our systems use multi-layer quantum authentication. Some areas may require specific parameters and headers to access.</p>
+        </div>
+        
+        <h2>Available Endpoints:</h2>
+        <ul>
+            <li><code>/login.php</code> - Employee authentication portal</li>
+            <li><code>/dashboard.php</code> - User dashboard (login required)</li>
+            <li><code>/admin/</code> - <strong>Admin panel</strong> (restricted access)</li>
+            <li><code>/api/</code> - API endpoints</li>
+        </ul>
+        
+        <div class="footer">
+            <p>⚠️ This is a CTF challenge environment. Unauthorized testing of security mechanisms is encouraged!</p>
+            <p>Quantum Security Corp © 2026 | Security Level: <span style="color: red;">MAXIMUM</span></p>
+            <p style="font-size: 0.7em; opacity: 0.6;">
+                <!-- Easter egg: Base64 encoded hint -->
+                <!-- UmVhbCBjaGFsbGVuZ2U6IC9hZG1pbi9xdWFudHVtX2F1dGgucGhwIHJlcXVpcmVzIHF1YW50dW0gcGFyYW1ldGVycw== -->
+            </p>
+        </div>
+    </div>
+    
+    <script>
+    // Console clues
+    console.log("%c🔍 Quantum Security CTF Challenge", "color: #2c3e50; font-size: 18px; font-weight: bold;");
+    console.log("%cLook beyond the obvious login forms...", "color: #e74c3c;");
+    console.log("%cAdmin panels often have additional protection layers", "color: #3498db;");
+    
+    // Check if player is inspecting
+    setTimeout(() => {
+        console.log("%c💡 Hint: Some systems require specific headers like X-QUANTUM-*", "color: #f39c12;");
+    }, 5000);
+    </script>
+</body>
+</html>

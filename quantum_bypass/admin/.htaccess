@@ -1,0 +1,31 @@
+# Quantum Security Admin Area
+# ===========================
+# This area is protected by quantum authentication
+# Requires: quantum_token, temporal_sig, timestamp
+# And headers: X-QUANTUM-AUTH, X-QUANTUM-NETWORK
+
+# Disable directory listing
+Options -Indexes
+
+# Default 403 for direct access
+ErrorDocument 403 /403.php
+
+# Allow access only through proper authentication
+<Files "quantum_auth.php">
+    # This file handles its own authentication
+    Order Allow,Deny
+    Allow from all
+</Files>
+
+<Files "quantum_control.php">
+    # Requires session authentication
+    Order Deny,Allow
+    Deny from all
+    Allow from all
+    # Actual authentication is handled in PHP
+</Files>
+
+# Security headers
+Header always set X-Content-Type-Options nosniff
+Header always set X-Frame-Options DENY
+Header always set X-XSS-Protection "1; mode=block"
