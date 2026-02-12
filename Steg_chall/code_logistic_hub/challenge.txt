@@ -1,0 +1,6 @@
+Title: Inventory Sheet Q4
+
+Description:
+Routine scan. All codes must be processed. Some data may require deeper inspection. Confirm shipment integrity.
+
+Flag:- RCS{MULT1_C0D3_B4RC0D3}

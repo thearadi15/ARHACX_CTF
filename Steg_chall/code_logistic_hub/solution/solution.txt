@@ -1,0 +1,64 @@
+Step-by-step Solution for 'Code Logistics Hub' CTF Challenge
+===============================================================
+
+1. **Open the Image**
+   - File: CTF_Code_Logistics_Hub.jpg
+
+2. **Scan the Aztec Code (Top-Left Corner)**
+   - Use https://www.dcode.fr/aztec-code or any Aztec code reader.
+   - Upload the image or crop the top-left 60x60 area.
+   - Decoded message: `MaxiCode in floor reveals PDF417 key`
+
+3. **Scan the QR Code (Center)**
+   - Use https://www.dcode.fr/qrcode-reader or any QR code reader.
+   - Upload/crop the center QR code (180x180 at (310,210)).
+   - Decoded message: `Ignore me, check the corners` (red herring).
+
+4. **Scan the PDF417 Barcode (Bottom Edge)**
+   - Use https://www.dcode.fr/pdf417-barcode or any PDF417 reader.
+   - Crop the bottom barcode (500x60 at (150,550)).
+   - The barcode may look noisy/damaged, but dCode can often still decode it.
+   - Decoded message: `Password: SH1PP1NG_L0G5`
+
+5. **Extract Hidden DataMatrix Codes from Color Channels**
+   - Open the image in an editor (GIMP, Photoshop, or use Python/OpenCV).
+   - Split the image into Red, Green, and Blue channels.
+   - For each channel, crop the following regions and save as separate images:
+     - Blue channel: (600,50)-(680,130) → Save as dm1.png
+     - Green channel: (650,250)-(730,330) → Save as dm2.png
+     - Red channel: (700,450)-(780,530) → Save as dm3.png
+   - Use https://www.dcode.fr/datamatrix-code or any DataMatrix reader:
+     - Upload each cropped channel image to dCode's DataMatrix reader.
+     - Decoded results:
+      - dm1.png (Blue): `RCS{MULT1`
+       - dm2.png (Green): `_C0D3_`
+       - dm3.png (Red): `B4RC0D3}`
+   - Combine the three parts: `RCS{MULT1_C0D3_B4RC0D3}`
+
+6. **Check the EXIF Thumbnail (Optional)**
+   - Use https://www.dcode.fr/exif-metadata or any EXIF viewer.
+   - Upload the image and extract the embedded thumbnail.
+   - The thumbnail is a DataMatrix code with the first part of the flag: `RCS{MULT1`
+
+7. **Final Flag**
+   - Combine all DataMatrix parts: `RCS{MULT1_C0D3_B4RC0D3}`
+
+---
+
+**Summary Table:**
+| Step         | Tool/URL                        | Data Extracted                        |
+|--------------|---------------------------------|---------------------------------------|
+| Aztec        | dcode.fr/aztec-code             | MaxiCode in floor reveals PDF417 key  |
+| QR           | dcode.fr/qrcode-reader          | Ignore me, check the corners          |
+| PDF417       | dcode.fr/pdf417-barcode         | Password: SH1PP1NG_L0G5               |
+| DataMatrix 1 | dcode.fr/datamatrix-code        | RCS{MULT1                         |
+| DataMatrix 2 | dcode.fr/datamatrix-code        | _C0D3_                                |
+| DataMatrix 3 | dcode.fr/datamatrix-code        | B4RC0D3}                              |
+| EXIF         | dcode.fr/exif-metadata          | DataMatrix: RCS{MULT1             |
+
+**Flag:**
+RCS{MULT1_C0D3_B4RC0D3}
+
+---
+
+You can use dCode.fr or any barcode/EXIF tool for each step. For channel extraction, use an image editor or Python (e.g., OpenCV or Pillow) to isolate and crop the color channel regions.
